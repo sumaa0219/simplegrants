@@ -28,7 +28,7 @@ export const authOptions = {
   callbacks: {
     async session({ session, token, user }: any) {
       // Adding the user ID here so we can retrieve the user in the backend
-      session.user.id = user?.id
+      session.user.id = user?.id || null
 
       return session
     },
