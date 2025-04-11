@@ -1,0 +1,67 @@
+services:
+  # traefik:
+    # image: traefik:v2.9
+    # container_name: "traefik"
+    # restart: always
+    # command:
+    #   - "--accesslog=true"
+    #   - "--accesslog.filepath=/traefik/logs/access.log"
+    #   - "--api.insecure=true"
+    #   - "--providers.docker=true"
+    #   - "--providers.docker.exposedbydefault=false"
+    #   - "--entrypoints.web.address=:80"
+    #   - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+    #   - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+    #   - "--entrypoints.websecure.address=:443"
+    #   - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+    #   - "--certificatesresolvers.myresolver.acme.email=elvtdnft@gmail.com"
+    #   - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    # ports:
+    #   - "80:80"
+    #   - "443:443"
+    #   - "8080:8080"
+    # volumes:
+    #   - "./letsencrypt:/letsencrypt"
+    #   - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    # networks:
+    #   - simplegrants
+  simplegrants-backend:
+    extends:
+      file: ./backend/docker-compose.yml
+      service: simplegrants-backend
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - simplegrants-database
+  simplegrants-database:
+    extends:
+      file: ./backend/docker-compose.yml
+      service: simplegrants-database
+    env_file:
+      - ./backend/.env
+  simplegrants-frontend:
+    extends:
+      file: ./frontend/docker-compose.yml
+      service: simplegrants-frontend
+    depends_on:
+      - simplegrants-backend
+    env_file:
+      - ./frontend/.env.production
+  nginx-proxy-manager:
+    image: 'jc21/nginx-proxy-manager:latest'
+    restart: unless-stopped
+    ports:
+      - '80:80' # Public HTTP Port
+      - '443:443' # Public HTTPS Port
+      - '81:81' # Admin Web Port
+    volumes:
+      - ./data:/data
+      - ./letsencrypt:/etc/letsencrypt
+    networks:
+      - simplegrants
+
+volumes:
+  simplegrants-database:
+
+networks:
+  simplegrants:

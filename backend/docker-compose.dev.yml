@@ -1,0 +1,37 @@
+services:
+  simplegrants-backend:
+    container_name: simplegrants-backend
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    working_dir: /app
+    restart: always
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    env_file:
+      - .env
+    ports:
+      - 3000:3000
+    depends_on:
+      - simplegrants-database
+    networks:
+      - simplegrants
+  simplegrants-database:
+    container_name: simplegrants-database
+    image: postgres:14
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - 5432:5432
+    volumes:
+      - simplegrants-database:/var/lib/postgresql/data
+    networks:
+      - simplegrants
+
+volumes:
+  simplegrants-database:
+
+networks:
+  simplegrants:

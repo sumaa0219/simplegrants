@@ -1,0 +1,228 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../node_modules/.prisma/client"
+  binaryTargets = ["native", "darwin", "linux-arm64-openssl-1.1.x", "linux-arm64-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  User
+  Admin
+}
+
+// These models are for NextAuth, allowing us to use OAuth providers for login
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// NextAuth User model, but with our additional extensions
+model User {
+  id               String            @id @default(cuid())
+  name             String?
+  email            String?           @unique
+  emailVerified    DateTime?
+  image            String?
+  accounts         Account[]
+  sessions         Session[]
+  bio              String?
+  twitter          String?
+  visitorId        String? // Comes from fingerprintjs
+  paymentMethods   PaymentMethod[]
+  grants           Grant[]
+  contributions    Contribution[]
+  role             Role              @default(User)
+  ecosystemBuilder EcosystemBuilder?
+  flagged          Boolean           @default(false) // To track if a user is flagged for malicious activity
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  checkoutSessions Checkout[]
+}
+
+// Grant = 公益プロジェクトのこと
+model Grant {
+  id               String          @id @default(cuid())
+  name             String
+  description      String
+  image            String
+  twitter          String
+  website          String
+  location         String
+  paymentAccountId String
+  paymentAccount   PaymentAccount  @relation(fields: [paymentAccountId], references: [id])
+  matchingRounds   MatchingRound[]
+  team             User[]
+  fundingGoal      Int
+  contributions    Contribution[]
+  matchedFund      MatchedFund[]
+  checkoutSessions Checkout[]
+  verified         Boolean
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+}
+
+model PaymentAccount {
+  id               String          @id @default(cuid())
+  grant            Grant[]
+  recipientAddress String
+  providerId       String
+  provider         PaymentProvider @relation(fields: [providerId], references: [id])
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  @@unique([recipientAddress, providerId])
+}
+
+model PaymentMethod {
+  id            String          @id @default(cuid())
+  userId        String
+  user          User            @relation(fields: [userId], references: [id])
+  uniqueId      String          @unique
+  displayInfo   String?
+  denomination  String
+  providerId    String
+  provider      PaymentProvider @relation(fields: [providerId], references: [id])
+  contributions Contribution[]
+  metadata      Json
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+model PaymentProvider {
+  id                String           @id @default(cuid())
+  name              String
+  type              String
+  acceptedCountries String[]
+  denominations     String[]
+  website           String
+  schema            Json
+  version           Int
+  paymentAccount    PaymentAccount[]
+  paymentMethod     PaymentMethod[]
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+}
+
+// contribution = プロジェクトへ寄付すること
+model Contribution {
+  id              String         @id @default(cuid())
+  userId          String
+  user            User           @relation(fields: [userId], references: [id])
+  amount          Float
+  denomination    String
+  amountUsd       Float
+  paymentMethodId String
+  paymentMethod   PaymentMethod  @relation(fields: [paymentMethodId], references: [id])
+  grantId         String?
+  grant           Grant?         @relation(fields: [grantId], references: [id])
+  matchingRoundId String?
+  matchingRound   MatchingRound? @relation(fields: [matchingRoundId], references: [id])
+  flagged         Boolean
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model MatchingRound {
+  id               String             @id @default(cuid())
+  name             String
+  description      String?
+  image            String?
+  funders          EcosystemBuilder[]
+  contributions    Contribution[]
+  grants           Grant[]
+  matchedFunds     MatchedFund[]
+  checkoutSessions Checkout[]
+  paid             Boolean            @default(false)
+  verified         Boolean            @default(false)
+  startDate        DateTime
+  endDate          DateTime
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+}
+
+model EcosystemBuilder {
+  id             String          @id @default(cuid())
+  userId         String          @unique
+  user           User            @relation(fields: [userId], references: [id])
+  matchingRounds MatchingRound[]
+  inviteCodesId  String          @unique
+  inviteCode     InviteCodes     @relation(fields: [inviteCodesId], references: [id])
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model InviteCodes {
+  id          String            @id @default(cuid())
+  code        String
+  claimed     Boolean           @default(false)
+  claimedById String?
+  claimedBy   EcosystemBuilder?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+}
+
+model MatchedFund {
+  id              String         @id @default(cuid())
+  matchingRoundId String?
+  matchingRound   MatchingRound? @relation(fields: [matchingRoundId], references: [id])
+  grantId         String?
+  grant           Grant?         @relation(fields: [grantId], references: [id])
+  amount          Float
+  denomination    String
+  amountUsd       Float
+  payoutAt        DateTime
+
+  @@unique([matchingRoundId, grantId])
+}
+
+model Checkout {
+  id              Int            @id @default(autoincrement())
+  userId          String
+  user            User           @relation(fields: [userId], references: [id])
+  amount          Float
+  denomination    String
+  grantId         String?
+  grant           Grant?         @relation(fields: [grantId], references: [id])
+  matchingRoundId String?
+  matchingRound   MatchingRound? @relation(fields: [matchingRoundId], references: [id])
+  groupId         String //transfer_group for Stripe or tx ID or any other
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}

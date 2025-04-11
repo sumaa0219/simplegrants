@@ -1,0 +1,5 @@
+.env
+.env_local
+node_modules
+/data
+/letsencrypt
