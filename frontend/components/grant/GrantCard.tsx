@@ -52,8 +52,8 @@ const GrantCard = ({
       </div>
       <div className="flex flex-col px-8 py-6 h-full items-start justify-between">
         <div className="flex flex-col">
-          <p className="font-bold text-[22px]">{grant.name}</p>
-          {"team" in grant && (
+          <p className="font-bold text-[22px]">{grant?.name || "No Name Available"}</p>
+          {"team" in grant && grant.team[0]?.name && (
             <p className="text-sg-700">by {grant.team[0].name}</p>
           )}
           <p className="text-sm mt-4 overflow-hidden text-ellipsis line-clamp-3">
@@ -74,12 +74,10 @@ const GrantCard = ({
                 className="mb-3"
               />
               <p className="font-bold text-lg mb-3">
-                {" "}
                 {grant.amountRaised.toLocaleString("ja-JP", {
                   maximumFractionDigits: 0,
                 })}円{" "}
-                / {((grant.amountRaised / grant.fundingGoal) * 100).toFixed(0)}%
-                達成済み
+                / {((grant.amountRaised / grant.fundingGoal) * 100).toFixed(0)}% 達成済み
               </p>
             </>
           )}
@@ -99,30 +97,14 @@ const GrantCard = ({
                 </Button>
               ) : (
                 <Button
-                //   width="full"
-                //   className=""
-                //   onClick={(e) => {
-                //     e.stopPropagation();
-                //     addToCart(grant);
-                //   }}
-                //   disabled={
-                //     "team" in grant
-                //       ? grant.team.some(
-                //         (team) => team.email === session?.user?.email
-                //       )
-                //       : false
-                //   }
-                // >
-                //   カートに入れる
-// 変更前
-                    width="full"
-                    className="bg-gray-400 text-white cursor-not-allowed"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                    }}
-                    disabled={true}
-                  >
-                    終了しました
+                  width="full"
+                  className="bg-gray-400 text-white cursor-not-allowed"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                  }}
+                  disabled={true}
+                >
+                  終了しました
                 </Button>
               )}
             </>
