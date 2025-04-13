@@ -14,6 +14,7 @@ interface IGrantListProps {
 const GrantList = ({ grant, onClick }: IGrantListProps) => {
   const { grants, addToCart, removeFromCart } = useGrantCartStore();
   const { data: session } = useSession();
+  console.log("session", session);
 
   const addedToCart = React.useMemo(
     () => grants.find((data) => data.id === grant.id),
