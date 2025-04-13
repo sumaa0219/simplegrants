@@ -14,7 +14,7 @@ interface IGrantListProps {
 const GrantList = ({ grant, onClick }: IGrantListProps) => {
   const { grants, addToCart, removeFromCart } = useGrantCartStore();
   const { data: session } = useSession();
-  console.log("session", session);
+  console.log("Grant object:", grant);
 
   const addedToCart = React.useMemo(
     () => grants.find((data) => data.id === grant.id),
@@ -54,8 +54,7 @@ const GrantList = ({ grant, onClick }: IGrantListProps) => {
             {grant.amountRaised.toLocaleString("ja-JP", {
               maximumFractionDigits: 0,
             })}{" "}
-            / {((grant.amountRaised / grant.fundingGoal) * 100).toFixed(0)}%
-            funded
+            / {((grant.amountRaised / grant.fundingGoal) * 100).toFixed(0)}% funded
           </p>
         </div>
       </div>
