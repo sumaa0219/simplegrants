@@ -119,7 +119,7 @@ const GrantCard = ({
                   }}
                   disabled={true}
                 > */}
-                  終了しました
+                  カートに追加する
                 </Button>
               )}
             </>
