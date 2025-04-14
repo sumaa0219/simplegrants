@@ -98,12 +98,27 @@ const GrantCard = ({
               ) : (
                 <Button
                   width="full"
+                  className=""
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    addToCart(grant);
+                  }}
+                  disabled={
+                    "team" in grant
+                      ? grant.team.some(
+                        (team) => team.email === session?.user?.email
+                      )
+                      : false
+                  }
+                >
+
+                  {/* width="full"
                   className="bg-gray-400 text-white cursor-not-allowed"
                   onClick={(e) => {
                     e.stopPropagation();
                   }}
                   disabled={true}
-                >
+                > */}
                   終了しました
                 </Button>
               )}
